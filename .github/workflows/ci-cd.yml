@@ -2,19 +2,17 @@ name: ORBERP Custom App CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
-    - name: Generate version
-      id: version
-      run: echo "VERSION=v1.0.$(date +%Y%m%d-%H%M)-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
-      
-    - name: Trigger deploy webhook
+    - name: Debug info
       run: |
-        echo "Triggering deploy for version ${{ steps.version.outputs.VERSION }}"
-        echo "Deploy would be triggered on ${{ secrets.DEPLOY_HOST }}"
+        echo "Repository: ${{ github.repository }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Secrets configured: ${{ secrets.DEPLOY_HOST && 'YES' || 'NO' }}"
