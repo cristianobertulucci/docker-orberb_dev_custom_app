@@ -1,0 +1,30 @@
+name: Build and Deploy Custom App
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate Version
+        id: version
+        run: echo "VERSION=v1.0.$(date +%Y%m%d-%H%M)-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+        
+      - name: Build Image
+        run: |
+          docker build -t localhost:5000/orberp-backend:${{ steps.version.outputs.VERSION }} .
+          
+      - name: Push to Registry
+        run: |
+          docker push localhost:5000/orberp-backend:${{ steps.version.outputs.VERSION }}
+          
+      - name: Deploy to Dev
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          ./scripts/deploy-version.sh ${{ steps.version.outputs.VERSION }}
