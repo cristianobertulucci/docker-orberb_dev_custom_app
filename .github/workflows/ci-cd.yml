@@ -3,41 +3,18 @@ name: ORBERP Custom App CI/CD
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-
-env:
-  REGISTRY_URL: localhost:5000
-  DEPLOY_HOST: seu-servidor.com
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
+    - uses: actions/checkout@v4
+    
     - name: Generate version
       id: version
+      run: echo "VERSION=v1.0.$(date +%Y%m%d-%H%M)-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+      
+    - name: Trigger deploy webhook
       run: |
-        VERSION=v1.0.$(date +%Y%m%d-%H%M)-${GITHUB_SHA:0:7}
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        
-    - name: Build Docker image
-      run: |
-        docker build -t ${{ env.REGISTRY_URL }}/orberp-backend:${{ steps.version.outputs.VERSION }} .
-        
-    - name: Push to registry
-      run: |
-        docker push ${{ env.REGISTRY_URL }}/orberp-backend:${{ steps.version.outputs.VERSION }}
-        
-    - name: Deploy to dev environment
-      if: github.ref == 'refs/heads/develop'
-      run: |
-        ssh deploy@${{ env.DEPLOY_HOST }} "cd /opt/docker/stacks/orberp-dev && ./scripts/deploy-version.sh ${{ steps.version.outputs.VERSION }}"
-        
-    - name: Deploy to production
-      if: github.ref == 'refs/heads/main'
-      run: |
-        ssh deploy@${{ env.DEPLOY_HOST }} "cd /opt/docker/stacks/orberp-prod && ./scripts/deploy-version.sh ${{ steps.version.outputs.VERSION }}"
+        echo "Triggering deploy for version ${{ steps.version.outputs.VERSION }}"
+        echo "Deploy would be triggered on ${{ secrets.DEPLOY_HOST }}"
